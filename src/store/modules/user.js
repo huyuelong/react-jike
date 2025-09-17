@@ -1,23 +1,23 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { request } from '@/utils'
+import { request, getToken, setToken } from '@/utils'
 
 const userStore = createSlice({
     name: 'user',
     // 数据状态
     initialState: {
-        token: localStorage.getItem('token-key') || ''
+        token: getToken || ''
     },
     // 同步修改方法
     reducers: {
-        setToken: (state, action) => {
+        setUserInfo: (state, action) => {
             state.token = action.payload
             // localstorage存一份
-            localStorage.setItem('token-key', action.payload)
+            setToken(action.payload)
         }
     }
 })
 
-const { setToken } = userStore.actions
+const { setUserInfo } = userStore.actions
 
 const userReducer = userStore.reducer
 
@@ -25,10 +25,10 @@ const userReducer = userStore.reducer
 const fetchLogin = (loginForm) => {
     return async (dispatch) => {
         const res = await request.post('/authorizations', loginForm)
-        dispatch(setToken(res.data.token))
+        dispatch(setUserInfo(res.data.token))
     }
 }
 
-export { setToken, fetchLogin }
+export { setUserInfo, fetchLogin }
 
 export default userReducer
