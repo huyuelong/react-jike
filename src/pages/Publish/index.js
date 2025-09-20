@@ -7,14 +7,15 @@ import {
     Input,
     Upload,
     Space,
-    Select
+    Select,
+    message
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import './index.scss'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { getChannelAPI, createArticleAPI } from '@/apis/article'
 
 const { Option } = Select
@@ -28,19 +29,21 @@ const Publish = () => {
             setChannelList(res.data.channels)
         }
         getChannelList()
-
     }, [])
 
     // 提交表单
     const onFinish = async (formvalues) => {
         console.log(formvalues)
+        if (imageList.length !== imageType) {
+            return message.error('封面类型和图片数量不匹配')
+        }
         const { title, content, channel_id } = formvalues
         const reqData = {
             title,
             content,
             cover: {
-                type: 0,
-                images: []
+                type: imageType,
+                images: imageList.map(item => item.response.data.url)
             },
             channel_id
         }
@@ -48,14 +51,25 @@ const Publish = () => {
     }
 
     // 切换图片封面类型
+    const cacheImageList = useRef([]) // 缓存图片列表
     const [imageType, setImageType] = useState(0)
     const onTypeChange = (e) => {
-        setImageType(e.target.value)
+        const type = e.target.value
+        setImageType(type)
+        if (type === 1) {
+            // 单图，截取第一张展示
+            const imgList = cacheImageList.current[0] ? [cacheImageList.current[0]] : []
+            setImageList(imgList)
+        } else if (type === 3) {
+            // 三图，取所有图片展示
+            setImageList(cacheImageList.current)
+        }
     }
 
     const [imageList, setImageList] = useState([])
-    const onUploadChange = (value) => { 
+    const onUploadChange = (value) => {
         setImageList(value.fileList)
+        cacheImageList.current = value.fileList
     }
 
     return (
@@ -91,16 +105,13 @@ const Publish = () => {
                             {channelList.map(item => <Option key={item.id} value={item.id}>{item.name}</Option>)}
                         </Select>
                     </Form.Item>
-                    <Form.Item
-                        label="封面"
-                        name="cover"
-                    >
+                    <Form.Item label="封面">
                         <Form.Item name="type">
                             <Radio.Group onChange={onTypeChange}>
-                            <Radio value={1}>单图</Radio>
-                            <Radio value={3}>三图</Radio>
-                            <Radio value={0}>无图</Radio>
-                        </Radio.Group>
+                                <Radio value={1}>单图</Radio>
+                                <Radio value={3}>三图</Radio>
+                                <Radio value={0}>无图</Radio>
+                            </Radio.Group>
                         </Form.Item>
                         {imageType > 0 &&
                             <Upload
@@ -109,8 +120,9 @@ const Publish = () => {
                                 showUploadList
                                 action={'http://geek.itheima.net/v1_0/upload'}
                                 onChange={onUploadChange}
-                                maxCount={imageType} 
-                                multiple={imageType > 1}  
+                                maxCount={imageType}
+                                multiple={imageType > 1}
+                                fileList={imageList}
                             >
                                 <div style={{ marginTop: 8 }}>
                                     <PlusOutlined />
