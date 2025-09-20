@@ -11,12 +11,12 @@ import {
     message
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import './index.scss'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useState, useRef } from 'react'
-import { createArticleAPI } from '@/apis/article'
+import { useState, useRef, useEffect } from 'react'
+import { createArticleAPI, getArticleByIdAPI } from '@/apis/article'
 import { useChannel } from '@/hooks/useChannel'
 
 const { Option } = Select
@@ -66,13 +66,38 @@ const Publish = () => {
         cacheImageList.current = value.fileList
     }
 
+    // 回填数据
+    const [searchParams] = useSearchParams()
+    const articleId = searchParams.get('id')
+    const [form] = Form.useForm()
+    useEffect(() => {
+        const getArticleDetail = async () => {
+            const res = await getArticleByIdAPI(articleId)
+            const data = res.data
+            const { cover } = data
+            form.setFieldsValue({
+                ...data,
+                type: data.cover.type,
+                image: data.cover.images
+            })
+            setImageType(cover.type)
+            // 显示图片({url:url})
+            setImageList(cover.images.map(url => {
+                return { url }
+            }))
+        }
+        if (articleId) {
+            getArticleDetail()   
+        }
+    }, [articleId, form])
+
     return (
         <div className="publish">
             <Card
                 title={
                     <Breadcrumb items={[
                         { title: <Link to={'/'}>首页</Link> },
-                        { title: '发布文章' },
+                        { title: `${articleId ? '编辑文章' : '发布文章'}` },
                     ]}
                     />
                 }
@@ -82,6 +107,7 @@ const Publish = () => {
                     wrapperCol={{ span: 16 }}
                     initialValues={{ type: 0 }}
                     onFinish={onFinish}
+                    form={form}
                 >
                     <Form.Item
                         label="标题"
