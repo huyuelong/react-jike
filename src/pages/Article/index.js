@@ -80,7 +80,7 @@ const Article = () => {
         begin_pubdate: '',
         end_pubdate: '',
         page: 1,
-        page_size: 4
+        per_page: 4
     })
 
     // 获取文章列表
@@ -104,6 +104,16 @@ const Article = () => {
             status: formValue.status,
             begin_pubdate: formValue.date[0].format('YYYY-MM-DD'),
             end_pubdate: formValue.date[1].format('YYYY-MM-DD'),
+        })
+    };
+
+    // 分页
+    const onPageChange = (page, pageSize) => { 
+        console.log(page)
+        setReqData({
+            ...reqData,
+            page,
+            per_page: pageSize,
         })
     };
 
@@ -151,7 +161,11 @@ const Article = () => {
             </Card>
             {/* 表格区域 */}
             <Card title={`根据筛选条件共查询到 ${count} 条结果：`}>
-                <Table rowKey="id" columns={columns} dataSource={list} />
+                <Table rowKey="id" columns={columns} dataSource={list} pagination={{
+                    total: count,
+                    pageSize: reqData.per_page,
+                    onChange: onPageChange
+                }} />
             </Card>
         </div>
     )
