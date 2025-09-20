@@ -11,12 +11,12 @@ import {
     message
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Await, Link, useSearchParams } from 'react-router-dom'
 import './index.scss'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useState, useRef, useEffect } from 'react'
-import { createArticleAPI, getArticleByIdAPI } from '@/apis/article'
+import { createArticleAPI, getArticleByIdAPI, updateArticleAPI } from '@/apis/article'
 import { useChannel } from '@/hooks/useChannel'
 
 const { Option } = Select
@@ -37,11 +37,28 @@ const Publish = () => {
             content,
             cover: {
                 type: imageType,
-                images: imageList.map(item => item.response.data.url)
+                images: imageList.map(item => {
+                    if (item.response) {
+                        return item.response.data.url
+                    } else {
+                        return item.url
+                    }
+                } )
             },
             channel_id
         }
-        await createArticleAPI(reqData)
+        if (articleId) {
+            // 更新
+            const res = await updateArticleAPI({ ...reqData, id: articleId })
+            if (res.message === 'OK') {
+                message.success('更新文章成功')
+            }
+        } else {
+            const res = await createArticleAPI(reqData)
+            if (res.message === 'OK') {
+                message.success('发布文章成功')
+            }
+        }
     }
 
     // 切换图片封面类型
