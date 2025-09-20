@@ -1,18 +1,20 @@
 import { Link } from 'react-router-dom'
-import { Card, Breadcrumb, Form, Button, Radio, DatePicker, Select } from 'antd'
+import { Card, Breadcrumb, Form, Button, Radio, DatePicker, Select, Popconfirm, message } from 'antd'
 import locale from 'antd/es/date-picker/locale/zh_CN'
 import { Table, Tag, Space } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import img404 from '@/assets/error.png'
 import { useChannel } from '@/hooks/useChannel'
 import { useEffect, useState } from 'react'
-import { getArticleListAPI } from '@/apis/article'
+import { delArticleAPI, getArticleListAPI } from '@/apis/article'
+import { useNavigate } from 'react-router-dom'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
 
 const Article = () => {
     const { channelList } = useChannel()
+    const navigate = useNavigate()
 
     // 准备列数据
     const status = {
@@ -61,13 +63,20 @@ const Article = () => {
             render: data => {
                 return (
                     <Space size="middle">
-                        <Button type="primary" shape="circle" icon={<EditOutlined />} />
-                        <Button
-                            type="primary"
-                            danger
-                            shape="circle"
-                            icon={<DeleteOutlined />}
-                        />
+                        <Button type="primary" shape="circle" icon={<EditOutlined />} onClick={() => navigate(`/publish?id=${data.id}`)} />
+                        <Popconfirm
+                            title="确认删除该条文章吗?"
+                            onConfirm={() => delArticle(data)}
+                            okText="确认"
+                            cancelText="取消"
+                        >
+                            <Button
+                                type="primary"
+                                danger
+                                shape="circle"
+                                icon={<DeleteOutlined />}
+                            />
+                        </Popconfirm>
                     </Space>
                 )
             }
@@ -104,11 +113,12 @@ const Article = () => {
             status: formValue.status,
             begin_pubdate: formValue.date[0].format('YYYY-MM-DD'),
             end_pubdate: formValue.date[1].format('YYYY-MM-DD'),
+            page: 1  // 筛选后回到第一页
         })
     };
 
     // 分页
-    const onPageChange = (page, pageSize) => { 
+    const onPageChange = (page, pageSize) => {
         console.log(page)
         setReqData({
             ...reqData,
@@ -116,6 +126,25 @@ const Article = () => {
             per_page: pageSize,
         })
     };
+
+    // 删除
+    const delArticle = async (data) => {
+        try {
+            console.log(data)
+            await delArticleAPI(data.id)
+            message.success('删除成功')
+
+            // 判断是否是最后一页最后一条
+            const isLastPage = list.length === 1 && reqData.page > 1
+            setReqData({
+                ...reqData,
+                page: isLastPage ? reqData.page - 1 : reqData.page
+            })
+        } catch (error) {
+            console.log(error)
+            message.error('删除失败')
+        }
+    }
 
     return (
         <div>
