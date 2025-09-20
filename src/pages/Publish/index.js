@@ -47,15 +47,14 @@ const Publish = () => {
         await createArticleAPI(reqData)
     }
 
-    // 上传
+    // 切换图片封面类型
     const [imageType, setImageType] = useState(0)
     const onTypeChange = (e) => {
-        console.log(e)
         setImageType(e.target.value)
     }
+
     const [imageList, setImageList] = useState([])
     const onUploadChange = (value) => { 
-        console.log('正在上传中', value)
         setImageList(value.fileList)
     }
 
@@ -73,7 +72,7 @@ const Publish = () => {
                 <Form
                     labelCol={{ span: 4 }}
                     wrapperCol={{ span: 16 }}
-                    initialValues={{ type: 1 }}
+                    initialValues={{ type: 0 }}
                     onFinish={onFinish}
                 >
                     <Form.Item
@@ -110,6 +109,8 @@ const Publish = () => {
                                 showUploadList
                                 action={'http://geek.itheima.net/v1_0/upload'}
                                 onChange={onUploadChange}
+                                maxCount={imageType} 
+                                multiple={imageType > 1}  
                             >
                                 <div style={{ marginTop: 8 }}>
                                     <PlusOutlined />
