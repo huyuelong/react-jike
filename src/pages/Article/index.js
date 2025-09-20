@@ -73,33 +73,40 @@ const Article = () => {
             }
         }
     ]
-    // 准备表格body数据
-    const data = [
-        {
-            id: '8218',
-            comment_count: 0,
-            cover: {
-                images: [],
-            },
-            like_count: 0,
-            pubdate: '2019-03-11 09:00:00',
-            read_count: 2,
-            status: 2,
-            title: 'wkwebview离线化加载h5资源解决方案'
-        }
-    ]
+
+    const [reqData, setReqData] = useState({
+        status: '',
+        channel_id: '',
+        begin_pubdate: '',
+        end_pubdate: '',
+        page: 1,
+        page_size: 4
+    })
 
     // 获取文章列表
     const [list, setList] = useState([])
     const [count, setCount] = useState(0)
     useEffect(() => {
         const getArticleList = async () => {
-            const res = await getArticleListAPI()
+            const res = await getArticleListAPI(reqData)
             setList(res.data.results)
             setCount(res.data.total_count)
         }
         getArticleList()
-    }, [])
+    }, [reqData])
+
+    // 筛选
+    const onFinish = (formValue) => {
+        console.log(formValue)
+        setReqData({
+            ...reqData,
+            channel_id: formValue.channel_id,
+            status: formValue.status,
+            begin_pubdate: formValue.date[0].format('YYYY-MM-DD'),
+            end_pubdate: formValue.date[1].format('YYYY-MM-DD'),
+        })
+    };
+
     return (
         <div>
             <Card
@@ -111,7 +118,7 @@ const Article = () => {
                 }
                 style={{ marginBottom: 20 }}
             >
-                <Form initialValues={{ status: '' }}>
+                <Form initialValues={{ status: '' }} onFinish={onFinish}>
                     <Form.Item label="状态" name="status">
                         <Radio.Group>
                             <Radio value={''}>全部</Radio>
@@ -125,8 +132,8 @@ const Article = () => {
                             placeholder="请选择文章频道"
                             style={{ width: 120 }}
                         >
-                            {channelList.map(item => <Option key={item.id} value="item.id">{item.name}</Option>)}
-                            
+                            {channelList.map(item => <Option key={item.id} value={item.id}>{item.name}</Option>)}
+
                         </Select>
                     </Form.Item>
 
